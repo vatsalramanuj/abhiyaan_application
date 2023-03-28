@@ -6,10 +6,6 @@ from math import pow, atan2, sqrt
 from turtlesim.msg import Pose
 import turtlesim.srv
 from turtlesim.srv import KillRequest, Kill
-import roslib
-roslib.load_manifest('abhiyaan')
-import tf
-import turtlesim.msg
 
 
 ROS_SERVICE_KILL = "kill"    
