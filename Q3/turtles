@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+import rospy
+from geometry_msgs.msg import Twist
+import random
+from math import pow, atan2, sqrt
+from turtlesim.msg import Pose
+import turtlesim.srv
+from turtlesim.srv import KillRequest, Kill
+import roslib
+roslib.load_manifest('abhiyaan')
+import tf
+import turtlesim.msg
+
+
+ROS_SERVICE_KILL = "kill"    
+
+  
+class TurtleBot:
+
+    def __init__(self):
+        """Creates a node with name 'turtlebot_controller'"""
+        rospy.init_node("my_controller", anonymous=True) # 'anonymous = True' makes sure that it is a unique node
+        
+        #publisher to '/turtle1/cmd_vel'
+        self.velocity_publisher = rospy.Publisher('/turtle1/cmd_vel',Twist, queue_size=10)
+        #subscriber from that rostopic
+        self.pose_subscriber = rospy.Subscriber('/turtle1/pose',Pose, self.update_pose)
+
+        self.pose = Pose()
+        
+        self.rate = rospy.Rate(10)
+
+    
+
+
+    def update_pose(self, data):
+        """to update the current pose of the turtle Hisoka""" 
+        self.pose = data
+        self.pose.x = round(self.pose.x, 4)
+        self.pose.y = round(self.pose.y, 4)
+
+    def euclidean_distance(self, goal_pose):
+        """distance between current pose and goal"""
+        return sqrt(pow((goal_pose.x - self.pose.x), 2) + pow((goal_pose.y - self.pose.y), 2))
+    
+    def linear_vel(self, goal_pose, constant=2):
+        """linear velocity magnitude"""
+        # below is a code that can be used to slow down the turtle when it is away from goal and 
+        #increse it's speed when it is farther away
+        #return constant * self.euclidean_distance(goal_pose)
+        return constant
+    
+    def steering_angle(self, goal_pose):
+        """direction of linear velocity"""
+        return atan2(goal_pose.y - self.pose.y, goal_pose.x - self.pose.x)
+    
+    def angular_vel(self, goal_pose, constant=6):
+        """angular velocity for taking sharp turns after killing a prey turtle"""
+        return constant * (self.steering_angle(goal_pose) - self.pose.theta)
+    
+    
+    
+    
+    def move2goal(self):
+        """moving Hisoka to the prey"""
+
+        #spawning new prey turtles randomly on the map
+        goal_pose = Pose()
+        goal_pose.x = int(random.uniform(0.6,10)//0.2)*0.2 
+        goal_pose.y = int(random.uniform(0.6,10)//0.2)*0.2
+        
+        rospy.wait_for_service('spawn')
+        spwn = rospy.ServiceProxy('spawn',turtlesim.srv.Spawn)
+        spwn(goal_pose.x,goal_pose.y,0,'prey')
+
+        #defining velocities and tolerance to which Hisoka will chase his prey
+        vel_msg = Twist()
+        while self.euclidean_distance(goal_pose) >= 0.1: #tolerance of 0.1 units of distance
+            vel_msg.linear.x = self.linear_vel(goal_pose)
+            vel_msg.linear.y = 0
+            vel_msg.linear.z = 0
+
+            vel_msg.angular.z = self.angular_vel(goal_pose)
+            vel_msg.angular.x = 0
+            vel_msg.angular.y = 0
+
+            self.velocity_publisher.publish(vel_msg)
+            self.rate.sleep()
+        vel_msg.linear.x = 0
+        vel_msg.angular.z = 0
+        self.velocity_publisher.publish(vel_msg)
+
+        #killing the prey turtle if Hisoka reaches it
+        if self.euclidean_distance(goal_pose) < 0.1:
+            
+            kill = rospy.ServiceProxy(ROS_SERVICE_KILL, Kill)
+            kill_response = kill.call(KillRequest('prey'))
+            print(kill_response)
+
+        #the code below can be the rudimentry form of the laser wall...
+        
+        #if self.pose.x > 10 or self.pose.y > 10 or self.pose.x < 0.3 or self.pose.y < 0.3:
+        #   killt = rospy.ServiceProxy(ROS_SERVICE_KILL, Kill)
+        #   killt_response = killt.call(KillRequest('turtle1'))
+        #   print(killt_response)
+
+#running the code over and over to keep spawning more and more prey turtles when one dies
+while __name__ == '__main__':
+    try:
+        x = TurtleBot()
+        x.move2goal()
+        
+        
+    except rospy.ROSInterruptException:
+        pass
