@@ -15,3 +15,4 @@ Abhiyaan is an amazing team that does actual practical innovation that can be im
 ## References:
 1. [For subscriber and publisher nodes](https://www.youtube.com/watch?v=Qk4vLFhvfbI&list=PLLSegLrePWgIbIrA4iehUQ-impvIXdd9Q)
 2. [For turtle simulator](http://wiki.ros.org/turtlesim/Tutorials/Go%20to%20Goal)
+3. [general doubt solving](https://stackoverflow.com/)
