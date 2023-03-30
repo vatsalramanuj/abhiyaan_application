@@ -2,4 +2,4 @@
     <node pkg ="abhiyaan" type = "publish_py" name = 'publish' output = "screen" />
     <node pkg ="abhiyaan" type = "subscribe_py" name = "subscribe" output = "screen" />
 </launch>
-# launches both the files simultaneously with asingle command
+# launches both the files simultaneously with a single command
