@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+#the above first line is essential for ROS to know that the file is coded in python.
 import rospy
 from std_msgs.msg import String
 if __name__=='__main__':
